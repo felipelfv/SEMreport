@@ -56,7 +56,7 @@ library(dplyr)
 
 \doublespacing
 {\bf SEM ANALYSIS:\\
-THE CASE OF CLASSROOM CLIMATE}
+THE CASE OF SCHOOL CLIMATE}
 
 \vspace{2 cm}
 
