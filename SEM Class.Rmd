@@ -113,7 +113,7 @@ $\hspace{1cm}$ Moreover, this report is particularly interested on the explorati
 - Hypothesis 8: The impact of diversity climate on self-esteem is mediated by peer rejection. That is, a more positive diversity climate decreases peer rejection, which in turn increases self-esteem.
 - Hypothesis 9: The impact of peer rejection on self-esteem is mediated by school belonging. That is, more peer rejection decreases school belonging, which in turn decreases self-esteem.
 
-$\hspace{1cm}$ The report was written with R markdown. The file can be found on my GitHub with all the code in R [@r2021] and analyses available (). I have also included a \textit{sessionInfo} file with the package versions.
+$\hspace{1cm}$ The report was written with R markdown. The file can be found on my GitHub with all the code in R [@r2021] and analyses available (https://github.com/felipelfv/SEMreport).
 
 ```{r data, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 #libraries
@@ -241,7 +241,7 @@ descriptive_data_table
 \subsection*{Statistical analyses}
 \addcontentsline{toc}{subsection}{Statistical analyses}
 
-$\hspace{1cm}$ The main model estimation accounted for the ordinal scale (i.e., Likert scale) of the items through the Weighted Least Squares Mean and Variance Adjusted (WLSMV) in contrast to the Maximum Likelihood Estimation (MLE), as suggested by previous literature [@li2016confirmatory; @mindril2010maximum]. That said, I also estimated another model with the MLE method in order to compare the differences, but this model is not exhaustively analyzed here.
+$\hspace{1cm}$ The main model estimation accounted for the ordinal scale (i.e., Likert scale) of the items through the Weighted Least Squares Mean and Variance Adjusted (WLSMV) in contrast to the Maximum Likelihood Estimation (MLE), as suggested by previous literature [@li2016confirmatory; @mindril2010maximum]. That said, I also estimated another model with the MLE method in order to compare the differences, but this model is not exhaustively analyzed here. All analyses were done with lavaan (Version: 0.6.13).
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # Load necessary package
