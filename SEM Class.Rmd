@@ -1,0 +1,523 @@
+---
+title: ''
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+    number_sections: no
+  word_document:
+    toc: yes
+    toc_depth: '2'
+indent: yes
+geometry: left = 2.5cm, right = 2.5cm, top = 2.5cm, bottom = 2.5cm
+fontsize: 11pt
+header-includes:
+- \usepackage{float}
+- \usepackage{sectsty}
+- \usepackage{paralist}
+- \usepackage{footnote}
+- \usepackage{setspace}\spacing{1.5}
+- \usepackage{fancyhdr}
+- \usepackage{lastpage}
+- \usepackage{dcolumn}
+- \usepackage{titlesec}
+- \usepackage{caption}
+- \usepackage[nottoc]{tocbibind}
+- \usepackage[document]{ragged2e}
+- \usepackage{pdflscape}
+bibliography: semref.bib
+csl: apa copy.csl
+---
+
+```{r setup, include=FALSE}
+library(haven)
+library(sem)
+library(semPlot)
+library(lavaan)
+library(dplyr)
+```
+\newpage
+
+\thispagestyle{empty}
+
+\begin{centering}
+
+\vspace{1cm}
+
+\Large{KU LEUVEN}
+
+\vspace{1cm}
+
+\Large{FINAL REPORT FOR STRUCTURAL EQUATIONS}
+
+\vspace{4cm}
+
+\Large
+
+\doublespacing
+{\bf SEM ANALYSIS:\\
+THE CASE OF CLASSROOM CLIMATE}
+
+\vspace{2 cm}
+
+\normalsize
+\singlespacing
+
+\end{centering}
+
+\vspace{1.5 cm}
+
+\begin{flushright}
+Final report for\\
+Structural Equations (B-KUL-G0B65A)\\
+submitted by\\
+\textbf{Felipe Fontana Vieira.}\\
+\vspace{0.5 cm}
+\end{flushright}
+
+\vspace{2.5 cm}
+
+\begin{centering}
+
+\normalsize
+2023
+
+\end{centering}
+
+\newpage
+
+\pagenumbering{arabic}
+\sectionfont{\centering}
+\begingroup
+\Large
+\bfseries
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+\endgroup
+
+$\hspace{1cm}$ School climate, often characterized by the interpersonal dynamics and emotional atmosphere within a learning environment, plays a critical role in shaping students' academic and socio-emotional outcomes [@wang2016school]. It particularly influences the experiences of minority students who may face unique challenges [@hillekens2023school]. Despite the absence of a universal definition, the concept broadly encompasses aspects of teachers' management strategies, institutional environment, safety, and quality of relationships among peers. Therefore, this underscores the importance of considering the diverse backgrounds and specific needs of all students, including minority groups [@berkowitz2022school; @jones2020racial].
+
+$\hspace{1cm}$ Among the multitude of factors that constitute school climate, the quality of staff-student relationships, the level of emotional and academic support (or lack) provided by peers, and the feeling of belonging to the environment by students, stand out as particularly influential [@wang2016school]. These elements, along with the physical environment and available resources, interplay to determine the overall feeling and "mood" of the school, which is likely to have distinct implications for minority students.
+
+$\hspace{1cm}$ The current study builds on the complex conceptualization of school climate, focusing on four key constructs: school belonging [@cemalcilar2010schools], peer rejection [@gage2014school], self-esteem [@coelho2020multilevel], and school diversity climate, with a specific focus on the experiences and perspectives of minority students. Here I propose a model that explores the direct and indirect relationships between these constructs, with an emphasis on understanding the unique challenges and influences faced by minority students. Importantly, this report aims to shed light on the mechanisms through which school climate impacts the self-esteem of minority students, offering valuable insights for educators seeking to foster a more inclusive and supportive learning environment.
+
+$\hspace{1cm}$ Moreover, this report is particularly interested on the exploration of the school \textit{diversity} climate. Despite the increasing recognition of diversity in the context of education, its influence on the school climate remains unknown, which leaves a knowledge gap in how it may influence students' experiences. For that, we posed the following hypothesis:
+
+- Hypothesis 1: A more positive diversity climate leads to a higher sense of school belonging for minorities.
+- Hypothesis 2: A more positive diversity climate leads to less peer rejection experienced by minorities.
+- Hypothesis 3: A more positive diversity climate leads to higher self-esteem for minorities.
+- Hypothesis 4: A higher sense of school belonging leads to higher self-esteem for minorities.
+- Hypothesis 5: More peer rejection leads to lower self-esteem for the minorities.
+- Hypothesis 6: More peer rejection leads to a lower sense of school belonging for minorities.
+- Hypothesis 7: The impact of diversity climate on self-esteem is mediated by school belonging. That is, a more positive diversity climate increases school belonging, which in turn increases self-esteem.
+- Hypothesis 8: The impact of diversity climate on self-esteem is mediated by peer rejection. That is, a more positive diversity climate decreases peer rejection, which in turn increases self-esteem.
+- Hypothesis 9: The impact of peer rejection on self-esteem is mediated by school belonging. That is, more peer rejection decreases school belonging, which in turn decreases self-esteem.
+
+$\hspace{1cm}$ The report was written with R markdown. The file can be found on my GitHub with all the code in R [@r2021] and analyses available (). I have also included a \textit{sessionInfo} file with the package versions.
+
+```{r data, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+#libraries
+library(haven)
+library(sem)
+library(semPlot)
+library(lavaan)
+library(dplyr)
+#importing data
+CILSSEM <- read_sav("/Users/felipevieira/Desktop/Data for internship/data_original.sav")
+
+################################################################################
+##DESCRIPTIVES
+#selecting variables of interest
+AnalysisVariable <- CILSSEM %>%
+  filter(culture_distance %in% c(0, 1)) %>%
+  select(sex, age, culture_distance, y1_fesch1, y1_fesch3, y1_fesch4, y1_fesch5,
+         y1_dissch1, y1_dissch2, y1_dissch3, y1_dissch4,
+         y1_vict3, y1_frdisc4, y1_frdisc5, y1_frdisc6,
+         y1_seff3, y1_seff4, y1_seff5, y1_seff6) #culture distance 0 is distant minority and culture distance 1 is neighboring min
+
+# Calculate the proportions
+proportions <- AnalysisVariable %>%
+  group_by(culture_distance) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  mutate(proportion = n / sum(n))
+
+distantminorities <- proportions$proportion[1]*100
+neighboringminorities <- proportions$proportion[2]*100
+# Print the proportions
+print(proportions)
+
+#age information
+age_summary <- summary(AnalysisVariable$age)
+print(age_summary)
+age_sd <- sd(AnalysisVariable$age, na.rm = TRUE)
+#storing variables
+agemean <- age_summary[4]
+agemin <- 12
+agemax <- 18
+agesd <- age_sd[1]
+#sex informatiom
+sex_counts <- table(AnalysisVariable$sex)
+print(sex_counts) #boy is 0 and girl is 1
+#storing
+boys <- sex_counts[1]
+girls <- sex_counts[2]
+################################################################################
+```
+
+\sectionfont{\centering}
+\begingroup
+\Large
+\bfseries
+\section*{Methods}
+\addcontentsline{toc}{section}{Methods}
+\endgroup
+
+\subsection*{Participants}
+\addcontentsline{toc}{subsection}{Participants}
+
+$\hspace{1cm}$ The data used is from the first wave of the Leuven Children of Immigrants Longitudinal Study (CILS-Leuven)\footnote{The dataset was provided by my intership supervisors, Prof. Batja Mesquita and Dr. Alba Jasini, from the Center for Social and Cultural Psychology at KU Leuven. The analyses conducted during my internship were complitely unrelated to the reported approach taken here. Also, I am aware that Prof. Bart Meuleman was part of this project.} [@phalet2018leuven]. The CILS-Leuven project recruited a nationwide sample of majority and minority students via a stratified random sampling procedure from a list of secondary schools issued by the Flemish Ministry of Education. Participants filled out questionnaires during class hours and in the presence of a teacher. The present report focused on the questionnaires related to demographic questions, school diversity, peer contact, school belonging, and self-esteem. The questions and items were answered on a 1 ("strongly agree") to 5 ("strongly disagree") scale, with the exception of peer rejection in which the scale was from 1 ("always") to 4 ("never") (see Table 1).
+
+$\hspace{1cm}$ For this report, I included the data from 3686 minority participants (Boys = `r boys`, Girls = `r girls`, aged `r agemin` to `r agemax`, $M_{age}$ = `r round(agemean,2)`, $SD_{age}$ = `r round(agesd,2)`). More specifically, I considered the \textit{distant minorities} (`r round(distantminorities,2)`%) - those who immigrated from geographically distant countries (i.e., Turkey, Italy). Adding to that, I included \textit{neighboring minority} students (i.e., Germany, France) (`r round(neighboringminorities,2)`%), which represents the students who immigrated from neighboring countries\footnote{The other students were the so-called majority students, defined as those who themselves, their parents and grandparents were born in Belgium.}.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Load necessary packages
+library(psych)
+library(dplyr)
+
+# Exclude the variables 'age', 'sex', and 'culture_distance' from the dataset
+AnalysisVariable_excluded <- AnalysisVariable %>% select(-c(age, sex, culture_distance))
+
+# Calculate descriptive statistics for the remaining variables
+descriptive_data <- as.data.frame(psych::describe(AnalysisVariable_excluded))
+
+
+# Select specific columns
+descriptive_data <- dplyr::select(descriptive_data, 
+                                  n,
+                                  mean,
+                                  sd,
+                                  median,
+                                  min,
+                                  max,
+                                  skew,
+                                  kurtosis)
+
+# Print the descriptive statistics
+#print(descriptive_data)
+
+# Make a data frame
+descriptive_data_df <- data.frame(
+  Term = rownames(descriptive_data),
+  N = descriptive_data$n,
+  Mean = round(descriptive_data$mean, 3),
+  SD = round(descriptive_data$sd, 3),
+  Median = round(descriptive_data$median, 3),
+  Min = round(descriptive_data$min, 3),
+  Max = round(descriptive_data$max, 3),
+  Skew = round(descriptive_data$skew, 3),
+  Kurtosis = round(descriptive_data$kurtosis, 3),
+  stringsAsFactors = FALSE
+)
+
+# Generate descriptive statistics table
+library(knitr)
+library(kableExtra)
+descriptive_data_table <- kable(descriptive_data_df, "latex", align = "lcccccccc", 
+      row.names = FALSE, booktabs = TRUE, 
+      col.names = c("Term", "N", "Mean", "SD", "Median", "Min", "Max", "Skew", "Kurtosis"),
+      caption = "Descriptive Statistics") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+descriptive_data_table
+```
+
+\begin{figure}
+\centering
+\makebox[\textwidth][c]{\includegraphics[width=0.8\textwidth]{correlationmatrix.png}}
+\captionsetup{labelformat=empty, font=scriptsize, justification=raggedright}
+\caption[\textbf{\textit{Figure 1.}} Correlation matrix.]{\textbf{\textit{Figure 1.} Correlation matrix.}}
+\end{figure}
+
+\subsection*{Statistical analyses}
+\addcontentsline{toc}{subsection}{Statistical analyses}
+
+$\hspace{1cm}$ The main model estimation accounted for the ordinal scale (i.e., Likert scale) of the items through the Weighted Least Squares Mean and Variance Adjusted (WLSMV) in contrast to the Maximum Likelihood Estimation (MLE), as suggested by previous literature [@li2016confirmatory; @mindril2010maximum]. That said, I also estimated another model with the MLE method in order to compare the differences, but this model is not exhaustively analyzed here.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# Load necessary package
+library(corrplot)
+
+# Calculate the correlation matrix
+cor_matrix <- cor(AnalysisVariable_excluded, use = "pairwise.complete.obs")
+
+# Print the correlation matrix
+print(cor_matrix)
+
+# Plot the correlation matrix
+corrplot(corr = cor_matrix, type = 'upper')
+
+library(corrplot)
+
+# Calculate the correlation matrix
+cor_matrix <- cor(AnalysisVariable_excluded, use = "pairwise.complete.obs")
+
+# Create a more professional-looking plot
+corrplot(cor_matrix, method = "color", type = "upper", 
+         tl.col = "black", # Text label color
+         tl.srt = 45,      # Text label rotation
+         addCoef.col = "black", # Add correlation coefficient to the plot
+         number.cex = 0.5, # Font size of correlation coefficient
+         title = "", # Add a title
+         mar = c(0,0,1,0)) # Margins around the plot
+```
+
+```{r sem model, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+library(tidySEM)
+################################################################################
+#SEM-RELATED CODE
+#definying the cfa model
+cfa_model <- 
+  "SchoolDiversityClimate =~ y1_dissch1 + y1_dissch2 + y1_dissch3 + y1_dissch4
+  SchoolBelonging =~ y1_fesch1 + y1_fesch3 + y1_fesch4 + y1_fesch5
+  PeerRejection =~ y1_vict3 + y1_frdisc4 + y1_frdisc5 + y1_frdisc6
+  Selfesteem =~ y1_seff3 + y1_seff4 + y1_seff5 + y1_seff6"
+
+#fit the model
+cfa_fit <- cfa(cfa_model, data = AnalysisVariable)
+
+#summary output
+summary(cfa_fit, fit.measures = TRUE)
+
+
+#####
+SchoolClimatex <- "
+# measurement model
+SchoolDiversityClimate =~ y1_dissch1 + y1_dissch2 + y1_dissch3 + y1_dissch4
+SchoolBelonging =~ y1_fesch1 + y1_fesch3 + y1_fesch4 + y1_fesch5
+PeerRejection =~ y1_vict3 + y1_frdisc4 + y1_frdisc5 + y1_frdisc6
+Selfesteem =~ y1_seff3 + y1_seff4 + y1_seff5 + y1_seff6
+
+# regression relationships
+SchoolBelonging ~ a*SchoolDiversityClimate + a2*PeerRejection
+PeerRejection ~ a1*SchoolDiversityClimate
+Selfesteem ~ b*SchoolBelonging + b1*PeerRejection + c*SchoolDiversityClimate
+
+# indirect effects
+ab := a*b
+ab1 := a1*b1
+ab2 := a2*b
+
+# total effects
+total := c + ab
+total1 := c + ab1
+total2 := c + ab2
+"
+fitWLSMV <- sem(SchoolClimatex, data = AnalysisVariable, order=T)
+summaryWLSMV <- summary(fitWLSMV, fit.measures = TRUE, standardized = TRUE)
+semPaths(fitWLSMV, whatLabels = "std", layout = "tree", curveAdjacent = TRUE)
+graph_sem(fitWLSMV)
+
+fitMLE <- sem(SchoolClimatex, data = AnalysisVariable)
+summaryMLE <- summary(fitMLE, fit.measures = TRUE, standardized = TRUE)
+semPaths(fitMLE, whatLabels = "std", layout = "tree", curveAdjacent = TRUE)
+graph_sem(fitMLE)
+
+aicMLE <- summaryMLE$fit[13]
+aicMLE <- 11952.18 
+bicMLE <- summaryMLE$fit[14]
+bicMLE <- 12093.55 
+cfiMLE <- summaryMLE$fit[9]
+cfiMLE <- 0.9623099 
+tliMLE <- summaryMLE$fit[10]
+tliMLE <- 0.9538488 
+srmrMLE <- summaryMLE$fit[25]
+srmrMLE <- 0.05078748 
+rmseaMLE <- summaryMLE$fit[17]
+rmseaMLE <- 0.04515749 
+rmseaCIlowerMLE <- summaryMLE$fit[18]
+rmseaCIlowerMLE <- 0.03186722 
+rmseaCIuppMLE <- summaryMLE$fit[19]
+rmseaCIuppMLE <- 0.05768509 
+chisquareMLE <- summaryMLE$fit[3]
+chisquareMLE <- 158.9516 
+chisquaredfMLE <- summaryMLE$fit[4]
+chisquaredfMLE <- 98
+chisquarepvalueMLE <- 0.000
+
+cfiWLSMV <- summaryWLSMV$fit[17]
+cfiWLSMV <- 0.9947305 
+tliWLSMV <- summaryWLSMV$fit[18]
+tliWLSMV <- 0.9935476
+srmrWLSMV <- summaryWLSMV$fit[41]
+srmrWLSMV <- 0.05659601
+rmseaWLSMV <- summaryWLSMV$fit[23]
+rmseaWLSMV <- 0.0356399 
+rmseaCIlowerWLSMV <- summaryWLSMV$fit[24]
+rmseaCIlowerWLSMV <- 0.01934352 
+rmseaCIuppWLSMV <- summaryWLSMV$fit[25]
+rmseaCIuppWLSMV <- 0.04935817 
+chisquareWLSMV <- summaryWLSMV$fit[3]
+chisquareWLSMV <- 135.8419 
+chisquaredfWLSMV <- summaryWLSMV$fit[4]
+chisquaredfWLSMV <- 98
+chisquarepvalueWLSMV <- 0.007
+```
+
+\sectionfont{\centering}
+\begingroup
+\Large
+\bfseries
+\section*{Results}
+\addcontentsline{toc}{section}{Results}
+\endgroup
+
+\subsection*{Model fit}
+\addcontentsline{toc}{subsection}{Model fit indices}
+
+$\hspace{1cm}$ The main model demonstrated a good fit, $x^2$(`r chisquaredfWLSMV`) = `r round(chisquareWLSMV,3)`, p < .001, CFI = `r round(cfiWLSMV,3)`, TLI = `r round(tliWLSMV,3)`, RMSEA = `r round(rmseaWLSMV,3)` (90% CI [`r round(rmseaCIlowerWLSMV,3)`, `r round(rmseaCIuppWLSMV,3)`]), SRMR = `r round(srmrWLSMV,3)`. The model estimated with the MLE method obtained the following indices: $x^2$(`r chisquaredfMLE`) = `r round(chisquareMLE,3)`, p < .001, CFI = `r round(cfiMLE,3)`, TLI = `r round(tliMLE,3)`, RMSEA = `r round(rmseaMLE,3)` (90% CI [`r round(rmseaCIlowerMLE,3)`, `r round(rmseaCIuppMLE,3)`]), SRMR = `r round(srmrMLE,3)`.
+
+\subsection*{Hypotheses testing}
+\addcontentsline{toc}{subsection}{Hypotheses testing}
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# Latent Variables
+latent_df <- data.frame(
+  Variable = c("SchoolDiversityClimate =~ y1_dissch1", "SchoolDiversityClimate =~ y1_dissch2", 
+               "SchoolDiversityClimate =~ y1_dissch3", "SchoolDiversityClimate =~ y1_dissch4", 
+               "SchoolBelonging =~ y1_fesch1", "SchoolBelonging =~ y1_fesch3", "SchoolBelonging =~ y1_fesch4", "SchoolBelonging =~ y1_fesch5", 
+               "PeerRejection =~ y1_vict3", "PeerRejection =~ y1_frdisc4", "PeerRejection =~ y1_frdisc5", "PeerRejection =~ y1_frdisc6",
+               "Selfesteem =~ y1_seff3", "Selfesteem =~ y1_seff4", "Selfesteem =~ y1_seff5", "Selfesteem =~ y1_seff6"),
+  Estimate = c(1.000, 0.856, 1.139, 0.811, 1.000, 0.880, 1.157, 1.071, 1.000, 1.056, 0.994, 0.982, 1.000, 0.985, 1.002, -0.431),
+  Std.Err = c("", 0.031, 0.038, 0.031, "", 0.019, 0.019, 0.017, "", 0.019, 0.019, 0.019, "", 0.026, 0.024, 0.029),
+  z_value = c("", 27.853, 29.707, 26.386, "", 45.484, 60.212, 63.593, "", 55.662, 52.265, 51.333, "", 37.302, 40.977, -14.916),
+  P_value = c("", 0.000, 0.000, 0.000, "", 0.000, 0.000, 0.000, "", 0.000, 0.000, 0.000, "", 0.000, 0.000, 0.000),
+  Std.lv = c(0.696, 0.596, 0.792, 0.564, 0.770, 0.677, 0.891, 0.824, 0.855, 0.903, 0.850, 0.839, 0.753, 0.741, 0.754, -0.324),
+  Std.all = c(0.696, 0.596, 0.792, 0.564, 0.770, 0.677, 0.891, 0.824, 0.855, 0.903, 0.850, 0.839, 0.753, 0.741, 0.754, -0.324)
+)
+latent_df$P_value <- ifelse(latent_df$P_value < 0.001, "< 0.001", round(latent_df$P_value, 3))
+
+latent_table <- kable(latent_df, "latex", booktabs = TRUE,
+                     caption = "Latent Variables") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+latent_table
+
+# Regressions
+regression_df <- data.frame(
+  Variable = c("SchoolBelonging ~ SchoolDiversityClimate", "SchoolBelonging ~ PeerRejection", 
+               "PeerRejection ~ SchoolDiversityClimate", 
+               "Selfesteem ~ SchoolBelonging", "Selfesteem ~ PeerRejection", "Selfesteem ~ SchoolDiversityClimate"),
+  Estimate = c(0.371, -0.204, -0.116, 0.227, -0.041, 0.249),
+  Std.Err = c(0.028, 0.024, 0.038, 0.027, 0.026, 0.031),
+  z_value = c(13.403, -8.447, -3.018, 8.396, -1.588, 8.134),
+  P_value = c(0.000, 0.000, 0.003, 0.000, 0.112, 0.000),
+  Std.lv = c(0.335, -0.227, -0.094, 0.232, -0.046, 0.230),
+  Std.all = c(0.335, -0.227, -0.094, 0.232, -0.046, 0.230)
+)
+regression_df$P_value <- ifelse(regression_df$P_value < 0.001, "< 0.001", round(regression_df$P_value, 3))
+
+regression_table <- kable(regression_df, "latex", booktabs = TRUE,
+                          caption = "Regressions") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) 
+
+regression_table
+```
+
+$\hspace{1cm}$ Figure 2 shows the path diagram for the model below described\footnote{Small disclaimer: I do apologize for the R generated figure, as it is usually not recommended for creating SEM diagrams (see Appendix).}. Table 2 and 3 contain the latent variables and regressions summary, respectively. 
+
+$\hspace{1cm}$ The results indicated a significant positive relationship between \textit{School Diversity Climate} and \textit{School Belonging} (Estimate = 0.371, SE = 0.028, z-value = 13.403, p < .001). This supports hypothesis 1, which suggests that a more positive diversity climate contributes to a higher sense of school belonging among minorities.
+
+$\hspace{1cm}$ There was also support for hypothesis 2. The findings showed a significant negative relationship between \textit{School Diversity Climate} and \textit{Peer Rejection} (Estimate = -0.116, SE = 0.038, z-value = -3.018, p = .003). This implies that a more positive diversity climate is associated with less peer rejection experienced by minorities.
+
+$\hspace{1cm}$ Moreover, there was a significant positive effect of \textit{School Diversity Climate} on \textit{Self-esteem} (Estimate = 0.249, SE = 0.031, z-value = 8.134, p < .001), supporting hypothesis 3. This means that a more positive diversity climate enhances self-esteem among minorities.
+
+$\hspace{1cm}$ There was also a significant positive relationship between \textit{School Belonging} and \textit{Self-esteem} (Estimate = 0.227, SE = 0.027, z-value = 8.396, p < .001), supporting hypothesis 4. This suggests that an increased feeling of school belonging fosters higher self-esteem in minorities.
+
+$\hspace{1cm}$ Contrary to hypothesis 5, the relationship between \textit{Peer Rejection} and \textit{Self-esteem} was not significant (Estimate = -0.041, SE = 0.026, z-value = -1.588, p = .112). Thus, despite having a negative relationship, increased peer rejection does not lead to lower self-esteem for minorities.
+
+$\hspace{1cm}$ There was, however, a significant negative relationship between \textit{Peer Rejection} and \textit{School Belonging} (Estimate = -0.204, SE = 0.024, z-value = -8.447, p < .001), which supports hypothesis 6. This indicates that more peer rejection may lead to a lower sense of school belonging for minorities.
+
+\begin{figure}
+\centering
+\makebox[\textwidth][c]{\includegraphics[width=0.8\textwidth]{semresults.png}}
+\captionsetup{labelformat=empty, font=scriptsize, justification=raggedright}
+\caption[\textbf{\textit{Figure 2.}} Model.]{\textbf{\textit{Figure 2.} Model.}}
+\end{figure}
+
+$\hspace{1cm}$ Concerning the mediation hypotheses, there was a significant indirect effect of \textit{School Diversity Climate} on \textit{Self-esteem} through \textit{School Belonging} (Estimate = 0.084, SE = 0.016, z-value = 5.227, p < .001). This supports hypothesis 7, which suggests that the effect of school diversity climate on self-esteem is partially mediated by school belonging.
+
+$\hspace{1cm}$ Furthermore, the indirect effect of \textit{School Diversity Climate} on \textit{Self-esteem} through \textit{Peer Rejection} was not significant (Estimate = 0.005, SE = 0.003, z-value = 1.642, p = .101). Hence, our findings did not support hypothesis 8.
+
+$\hspace{1cm}$ Lastly, there was a significant indirect effect of \textit{Peer Rejection} on \textit{Self-esteem} through \textit{School Belonging} (Estimate = -0.046, SE = 0.009, z-value = -5.121, p < .001). This provides support for hypothesis 9, indicating that the effect of peer rejection on self-esteem is partially mediated by school belonging.
+
+\sectionfont{\centering}
+\begingroup
+\Large
+\bfseries
+\section*{Discussion}
+\addcontentsline{toc}{section}{Discussion}
+\endgroup
+
+$\hspace{1cm}$ The current study contributes to the literature on the impact of school climate on minority students' experiences. In particular, our findings highlight the complex interplay between diversity climate, peer rejection, school belonging, and self-esteem among minorities in the Flemish context. This has several important implications for research and educational practices.
+
+$\hspace{1cm}$ Our findings supported most of the hypotheses. More specifically, this report shows the importance of a positive diversity climate for minority students' sense of school belonging (Hypothesis 1), reduced experiences of peer rejection (Hypothesis 2), and improved self-esteem (Hypothesis 3). This aligns with previous research that showed how a positive and inclusive diversity climate may foster feelings of acceptance, decrease discriminatory experiences, and promote positive self-concept among minority students (Moreu et al., 2021). The analyses also showed that school belonging plays a significant role in promoting self-esteem (Hypothesis 4). However, peer rejection does not seem to harm self-esteem, which did not support hypothesis 5. Interestingly, this latter aspect may be connected with the literature on rejection-identification theory [@armenta2009responding; @wellman2022identifying]. That said, individuals who perceive high levels of social rejection due to their group membership may strengthen their identification with their own-group. This increased group identification is responsible for providing a buffer against the negative effects of social rejection on self-esteem.
+
+$\hspace{1cm}$ Still, peer rejection may have an effect in other ways, such as leading to lower sense of school belonging for minorities (Hypothesis 6). This finding highlights the potentially harmful effects of exclusionary experiences on students' connection to their school environment. Importantly, the mediation analyses shed light on the mechanisms through which diversity climate might affect self-esteem. Furthermore, the impact of diversity climate on self-esteem appears to be partially mediated by school belonging (Hypothesis 7). This shows the vital role of an inclusive school environment in promoting self-esteem among minority students. However, hypothesis 8, which suggests that the impact of diversity climate on self-esteem is mediated by peer rejection, was not supported. This indicates that, while a positive diversity climate is associated with less peer rejection, this does not necessarily translate into higher self-esteem. Lastly, hypothesis 9, which proposed that the impact of peer rejection on self-esteem is mediated by school belonging, was supported. This suggests that, even in the face of peer rejection, fostering a sense of school belonging can still induce minority students' self-esteem.
+
+$\hspace{1cm}$ These results have significant implications for educators and policies. With this report, the findings show that it is crucial to provide an inclusive and supportive school diversity climate that not only minimizes peer rejection, but also promotes a sense of belonging. In that way, we can enhance self-esteem and overall well-being among minority students. 
+
+$\hspace{1cm}$ Moreover, further research is needed to fully elucidate the relationships and potential interventions explored in this study. In fact, this report comes with limitations. One may argue that the cross-sectional design precludes conclusions about causality. Another limitation is that this analyses did not include the school clusters as a higher level in the model. Lastly, the school climate analyzed in this report solely focused on the minorities' experience instead of the overall students' perception.
+
+$\hspace{1cm}$ In conclusion, despite the limitations, this report highlights the importance of a positive school diversity climate for promoting school belonging and self-esteem, and reducing peer rejection among minority students. 
+
+\newpage
+
+# References
+
+<div id="refs"></div>
+
+\newpage
+
+\sectionfont{\centering}
+\begingroup
+\Large
+\bfseries
+\section*{Appendix}
+\addcontentsline{toc}{section}{Appendix}
+\endgroup
+
+\begin{figure}
+\centering
+\makebox[\textwidth][c]{\includegraphics[width=0.8\textwidth]{IMG_2235.png}}
+\captionsetup{labelformat=empty, font=scriptsize, justification=raggedright}
+\caption[\textbf{\textit{Figure 2.}} Sacha Epskamp on Twitter.]{\textbf{\textit{Figure 2.} Sacha Epskamp on Twitter.}}
+\end{figure}
+
+\textbf{Items description}
+
+1. \textbf{Peer rejection} (1 to 4) 
+How often do you experience other students...
+- ...bullying you (y1_vict3).
+- ...treating you unfair or hostile (y1_frdisc4).
+- ...threatening you or bothering you (y1_frdisc5).
+- ...closing you out (y1_frdisc6).
+
+2. \textbf{Self-esteem} (1 to 5) 
+- I think I understand the things discussed in class (y1_seff3).
+- I have the feeling that I am not doing well at school (y1_seff4).
+- I often imagine how I can achieve my goals and expectations in school (y1_seff5).
+- I often fear I will not be able to fulfill my responsibilities or duties in school (y1_seff6).
+
+3. \textbf{School Diversity Climate} (1 to 5) 
+In my school ...
+- ...different cultures and religions are treated with respect (y1_dissch1).
+- ...they take strong action against racism and discrimination (y1_dissch2).
+- ...teachers treat all students equally regardless of their religion or descent (y1_dissch3).
+- ...teachers say that you shouldn’t discriminate students with another culture or origin (y1_dissch4).
+
+4. \textbf{School belonging} (1 to 5) 
+- I am proud to be a student of this school (y1_fesch1).
+- I would recommend this school to other young people (y1_fesch3).
+- I feel happy at this school (y1_fesch4).
+- I feel at home at this school (y1_fesch5).
+
