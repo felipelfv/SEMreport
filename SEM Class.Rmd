@@ -135,7 +135,7 @@ AnalysisVariable <- CILSSEM %>%
          y1_vict3, y1_frdisc4, y1_frdisc5, y1_frdisc6,
          y1_seff3, y1_seff4, y1_seff5, y1_seff6) #culture distance 0 is distant minority and culture distance 1 is neighboring min
 
-# Calculate the proportions
+#calculate the proportions
 proportions <- AnalysisVariable %>%
   group_by(culture_distance) %>%
   summarise(n = n(), .groups = "drop") %>%
@@ -184,14 +184,14 @@ $\hspace{1cm}$ For this report, I included the data from 3686 minority participa
 library(psych)
 library(dplyr)
 
-# Exclude the variables 'age', 'sex', and 'culture_distance' from the dataset
+#exclude some variables from the dataset
 AnalysisVariable_excluded <- AnalysisVariable %>% select(-c(age, sex, culture_distance))
 
-# Calculate descriptive statistics for the remaining variables
+#calculate descriptive statistics for the remaining variables
 descriptive_data <- as.data.frame(psych::describe(AnalysisVariable_excluded))
 
 
-# Select specific columns
+#select specific columns
 descriptive_data <- dplyr::select(descriptive_data, 
                                   n,
                                   mean,
@@ -202,10 +202,10 @@ descriptive_data <- dplyr::select(descriptive_data,
                                   skew,
                                   kurtosis)
 
-# Print the descriptive statistics
+
 #print(descriptive_data)
 
-# Make a data frame
+#data frame
 descriptive_data_df <- data.frame(
   Term = rownames(descriptive_data),
   N = descriptive_data$n,
@@ -219,7 +219,7 @@ descriptive_data_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-# Generate descriptive statistics table
+#generate descriptive statistics table
 library(knitr)
 library(kableExtra)
 descriptive_data_table <- kable(descriptive_data_df, "latex", align = "lcccccccc", 
@@ -244,31 +244,29 @@ descriptive_data_table
 $\hspace{1cm}$ The main model estimation accounted for the ordinal scale (i.e., Likert scale) of the items through the Weighted Least Squares Mean and Variance Adjusted (WLSMV) in contrast to the Maximum Likelihood Estimation (MLE), as suggested by previous literature [@li2016confirmatory; @mindril2010maximum]. That said, I also estimated another model with the MLE method in order to compare the differences, but this model is not exhaustively analyzed here. All analyses were done with \textit{lavaan} (Version: 0.6.13).
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
-# Load necessary package
+#package
 library(corrplot)
 
-# Calculate the correlation matrix
+#calculate the correlation matrix
 cor_matrix <- cor(AnalysisVariable_excluded, use = "pairwise.complete.obs")
-
-# Print the correlation matrix
 print(cor_matrix)
 
-# Plot the correlation matrix
+#plot for the correlation matrix
 corrplot(corr = cor_matrix, type = 'upper')
 
 library(corrplot)
 
-# Calculate the correlation matrix
+#calculate the correlation matrix
 cor_matrix <- cor(AnalysisVariable_excluded, use = "pairwise.complete.obs")
 
-# Create a more professional-looking plot
+#create a more APA plot
 corrplot(cor_matrix, method = "color", type = "upper", 
-         tl.col = "black", # Text label color
-         tl.srt = 45,      # Text label rotation
-         addCoef.col = "black", # Add correlation coefficient to the plot
-         number.cex = 0.5, # Font size of correlation coefficient
-         title = "", # Add a title
-         mar = c(0,0,1,0)) # Margins around the plot
+         tl.col = "black", #text label color
+         tl.srt = 45,      #text label rotation
+         addCoef.col = "black", #correlation coefficient to the plot
+         number.cex = 0.5, #font size of correlation coefficient
+         title = "", #title
+         mar = c(0,0,1,0)) #margins around the plot
 ```
 
 ```{r sem model, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
@@ -322,6 +320,7 @@ summaryMLE <- summary(fitMLE, fit.measures = TRUE, standardized = TRUE)
 semPaths(fitMLE, whatLabels = "std", layout = "tree", curveAdjacent = TRUE)
 graph_sem(fitMLE)
 
+#sorry for the mess here:
 aicMLE <- summaryMLE$fit[13]
 aicMLE <- 11952.18 
 bicMLE <- summaryMLE$fit[14]
@@ -380,7 +379,7 @@ $\hspace{1cm}$ The main model demonstrated a good fit, $x^2$(`r chisquaredfWLSMV
 \addcontentsline{toc}{subsection}{Hypotheses testing}
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Latent Variables
+#latent Variables
 latent_df <- data.frame(
   Variable = c("SchoolDiversityClimate =~ y1_dissch1", "SchoolDiversityClimate =~ y1_dissch2", 
                "SchoolDiversityClimate =~ y1_dissch3", "SchoolDiversityClimate =~ y1_dissch4", 
@@ -402,7 +401,7 @@ latent_table <- kable(latent_df, "latex", booktabs = TRUE,
 
 latent_table
 
-# Regressions
+#regressions
 regression_df <- data.frame(
   Variable = c("SchoolBelonging ~ SchoolDiversityClimate", "SchoolBelonging ~ PeerRejection", 
                "PeerRejection ~ SchoolDiversityClimate", 
