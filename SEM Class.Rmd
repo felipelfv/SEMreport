@@ -180,7 +180,7 @@ $\hspace{1cm}$ The data used is from the first wave of the Leuven Children of Im
 $\hspace{1cm}$ For this report, I included the data from 3686 minority participants (Boys = `r boys`, Girls = `r girls`, aged `r agemin` to `r agemax`, $M_{age}$ = `r round(agemean,2)`, $SD_{age}$ = `r round(agesd,2)`). More specifically, I considered the \textit{distant minorities} (`r round(distantminorities,2)`%) - those who immigrated from geographically distant countries (i.e., Turkey, Italy). Adding to that, I included \textit{neighboring minority} students (i.e., Germany, France) (`r round(neighboringminorities,2)`%), which represents the students who immigrated from neighboring countries\footnote{The other students were the so-called majority students, defined as those who themselves, their parents and grandparents were born in Belgium.}.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-# Load necessary packages
+#packages
 library(psych)
 library(dplyr)
 
