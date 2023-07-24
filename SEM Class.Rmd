@@ -143,7 +143,7 @@ proportions <- AnalysisVariable %>%
 
 distantminorities <- proportions$proportion[1]*100
 neighboringminorities <- proportions$proportion[2]*100
-# Print the proportions
+#proportions
 print(proportions)
 
 #age information
