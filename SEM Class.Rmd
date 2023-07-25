@@ -295,7 +295,7 @@ SchoolBelonging =~ y1_fesch1 + y1_fesch3 + y1_fesch4 + y1_fesch5
 PeerRejection =~ y1_vict3 + y1_frdisc4 + y1_frdisc5 + y1_frdisc6
 Selfesteem =~ y1_seff3 + y1_seff4 + y1_seff5 + y1_seff6
 
-# regression relationships
+# regressions
 SchoolBelonging ~ a*SchoolDiversityClimate + a2*PeerRejection
 PeerRejection ~ a1*SchoolDiversityClimate
 Selfesteem ~ b*SchoolBelonging + b1*PeerRejection + c*SchoolDiversityClimate
